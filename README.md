@@ -74,7 +74,7 @@ The naming of the raw result parameters, final report (fr_*), is as follows:
 - __fr_id_*__ - Final report of intraday model results
 - __fr_cm_*__ - Final report of congestion management model results
 
-These final reporting parameters are written after each model solve to a gdx-file and after successful rolling planning merged and upload to GAMS for further post-processing. 
+These final reporting parameters are written after each model solve to a gdx-file and after successful rolling planning merged and uploaded to GAMS for further post-processing. 
 
 **NOTE**: These individual gdx-files report only the results of the relevant hours or hour, and not the full solution of the entire model solve. E.g. Dayahead model is solved for 36 hour, but only 24 hour are reported. For intraday and congestion management, only the first hour is reported.
 
