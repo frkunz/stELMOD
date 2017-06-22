@@ -69,7 +69,7 @@ $eolcom //
 * xls_upload     activate xls upload, if no a gdx-file is requried (options: YES, NO)
 
 $setglobal datadir data/
-$setglobal data data_DE
+$setglobal data data
 $setglobal ptdf ptdf
 $setglobal ptdf_par PTDF
 *$setglobal renewable renewable //DISABLED
