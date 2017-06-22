@@ -548,7 +548,13 @@ w_max(j) = plantup(j,"Pump capacity");
 l_0(j) = 0;
 
 * construct set for binary and clustered unit commitment
+$IFTHEN %uc_region%==""
+set uc(c)        subset of countries with unit commitment;
+uc(c) = NO;
+$ELSE
 set uc(c)        subset of countries with unit commitment        /%uc_region%/;
+$ENDIF
+
 plbin(pl) = YES$(SUM(uc(c), SUM(n$mappln(pl,n), mapnc(n,c))));
 plclust(pl) = YES$(NOT plbin(pl));
 noplants(plbin(pl)) = 1;

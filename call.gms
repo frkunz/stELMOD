@@ -69,7 +69,7 @@ $eolcom //
 * xls_upload     activate xls upload, if no a gdx-file is requried (options: YES, NO)
 
 $setglobal datadir data/
-$setglobal data data
+$setglobal data data_DE
 $setglobal ptdf ptdf
 $setglobal ptdf_par PTDF
 *$setglobal renewable renewable //DISABLED
@@ -130,7 +130,7 @@ $setglobal t_cm 1
 $setglobal threads 1
 $setglobal scaler 1
 $setglobal penalty 1000000
-$setglobal uc_region DE, AT, LU
+$setglobal uc_region DE,AT,LU
 $setglobal cluster_size 100
 $setglobal trm 0.8
 *$setglobal PST NO //DISABLED
@@ -404,7 +404,7 @@ $        include prepare_id
          solved_id("absolute gap",tau) = 0;
          solved_id("relative gap",tau) = 0;
 
-$IF %solve_id%==NO $ONTEXT // $GOTO end_solve_id
+$IF %solve_id%==NO $GOTO end_solve_id
 *        Solve model
          solve intraday using MIP minimizing ID_COST;
 
@@ -414,9 +414,8 @@ $IF %solve_id%==NO $ONTEXT // $GOTO end_solve_id
          solved_id("solvestats",tau) = intraday.solvestat;
          solved_id("absolute gap",tau) = abs(intraday.objest - intraday.objval);
          solved_id("relative gap",tau) = solved_id("absolute gap",tau)/(1e-10+abs(intraday.objval));
-$ONTEXT
+
 $LABEL end_solve_id
-$OFFTEXT
 
 *        Write intermediate reports for history variables
 $IFTHEN %case%==1
@@ -521,7 +520,7 @@ $        include prepare_cm
          solved_cm("absolute gap",tau) = 0;
          solved_cm("relative gap",tau) = 0;
 
-$IF %solve_cm%==NO $ONTEXT //$GOTO end_solve_cm
+$IF %solve_cm%==NO $GOTO end_solve_cm
 
 $IFTHEN %case%==1
          CM_GEN_CM.fx(pl,t)$(cap_max(pl)) = 0;
@@ -545,7 +544,7 @@ $ENDIF
 *        Write final report variables to periods they belong to
          loop((tfirst%set_sto_root%),
                  loop(ttau$(ord(ttau) eq ord(tau)+lag_id),
-                         fr_cm_prelineflow(l,tau+lag_id) = CM_res_pmax_neg.l(l,tfirst%set_sto_root%);
+                         fr_cm_prelineflow(l,tau+lag_id) = CM_res_pmax_neg.l(l%set_sto_root%,tfirst);
                  );
          );
          EXECUTE_UNLOAD "%resultdir%precongestionmanagement.gdx" fr_cm_prelineflow;
@@ -553,7 +552,7 @@ $ENDIF
          EXECUTE "rename.bat";
          OPTION kill=fr_cm_prelineflow;
 
-         if(smax(l, abs(SUM((tfirst%set_sto_root%), CM_res_pmax_neg.l(l,tfirst%set_sto_root%))) - cap_l(l)) > 0,
+         if(smax(l, abs(SUM((tfirst%set_sto_root%), CM_res_pmax_neg.l(l%set_sto_root%,tfirst))) - cap_l(l)) > 0,
 *                Prepare data
 $                include prepare_cm
                  cap_factor = 1;
@@ -568,9 +567,7 @@ $                include prepare_cm
          solved_cm("absolute gap",tau) = abs(congestionmanagement.objest - congestionmanagement.objval);
          solved_cm("relative gap",tau) = solved_cm("absolute gap",tau)/(1e-10+abs(congestionmanagement.objval));
 
-$ONTEXT
 $LABEL end_solve_cm
-$OFFTEXT
 
 *         display t_cm,CM_GEN_CM.l;
 
@@ -657,20 +654,20 @@ $IF %solve_cm%==NO $GOTO end_cm
                   fr_cm_infes(tau+lag_id) = sum(n, CM_INFES_MKT.L(n,tfirst%set_sto_root%));
                   fr_cm_infes2(tau+lag_id) = sum(n, CM_INFES_MKT2.L(n,tfirst%set_sto_root%));
                   fr_cm_price(tau+lag_id) = CM_mkt.M(%set_sto_root2%tfirst)*scaler;
-                  fr_cm_delta_transfer(c,cc,tau+lag_id) = CM_TRANSFER_CM.L(c,cc%set_sto_root%,tfirst);
+                  fr_cm_delta_transfer(c,cc,tau+lag_id) = CM_TRANSFER_CM.L(c,cc,tfirst%set_sto_root%);
 
 *                node level report
                   fr_cm_infes_node(n,tau+lag_id) = CM_INFES_MKT.L(n,tfirst%set_sto_root%);
                   fr_cm_infes2_node(n,tau+lag_id) = CM_INFES_MKT2.L(n,tfirst%set_sto_root%);
                   fr_cm_price_node(n,tau+lag_id) = CM_MKT_NODE.M(n%set_sto_root%,tfirst)*scaler;
                   fr_cm_netin_node(n,tau+lag_id) = CM_NETINPUT.L(n,tfirst%set_sto_root%);
-                  fr_cm_lineflow(l,tau+lag_id) = CM_res_pmax_neg.l(l,tfirst%set_sto_root%);
+                  fr_cm_lineflow(l,tau+lag_id) = CM_res_pmax_neg.l(l%set_sto_root%,tfirst);
                   fr_cm_curt_node(r,n,tau+lag_id) = CM_WIND_CURT_CM.L(r,n,tfirst%set_sto_root%);
                   fr_cm_price_line_pos(l,tau+lag_id) =  CM_res_pmax_pos.M(l%set_sto_root%,tfirst)*scaler;
                   fr_cm_price_line_neg(l,tau+lag_id) =  CM_res_pmax_neg.M(l%set_sto_root%,tfirst)*scaler;
                   fr_cm_hvdcflow(hvdc(n,nn),tau+lag_id) = CM_HVDCFLOW.L(n,nn,tfirst%set_sto_root%);
                   fr_cm_price_hvdc(hvdc(n,nn),tau+lag_id) =  CM_res_hvdcmax.M(n,nn%set_sto_root%,tfirst)*scaler;
-                  fr_cm_alpha(l,tau+lag_id) =  CM_ALPHA.L(l%set_sto_root%,tfirst)*scaler;
+                  fr_cm_alpha(l,tau+lag_id) =  CM_ALPHA.L(l,tfirst%set_sto_root%)*scaler;
 
          );
 
