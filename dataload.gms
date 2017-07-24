@@ -1,4 +1,41 @@
 $STITLE Upload and Process Input Data
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
+
 $set debugdata no
 $ifi not %debugdata%=="yes" $goto notdebugdata
 $setglobal Techdata technologies
@@ -151,16 +188,16 @@ parameter
          exchange        exchange per model period
 
 *        Renewables
-         wind_fc         wind forecast in model
+         ren_fc          renewable forecast in model
          splitren        distribution from renewables to nodes
-         wind_fc_node    wind forecast on node basis
-         wind_sto        stochastic wind forecast
-         wind_tmp        temporary deterministic wind forecast
-         wind_sto_tmp    temporary stochastic wind forecast
-         wind_mean_tmp   temporary mean stochastic wind forecast
+         ren_fc_node     renewable forecast on node basis
+         ren_sto         stochastic renewable forecast
+         ren_tmp         temporary deterministic renewable forecast
+         ren_sto_tmp     temporary stochastic renewable forecast
+         ren_mean_tmp    temporary mean stochastic renewable forecast
          c_curt          curtailment penalty
-         wind_fc_da      wind forecast dayahead aggregated
-         wind_rel        wind realization
+         ren_fc_da       renewable forecast dayahead aggregated
+         ren_rel         renewable realization
 *        +++ Following are defined in construct_tree_1.gms
 *        ren_frc         renewable forecast on simulation horizon
 *        ren_frc_prob    renewable forecast probability on simulation horizon
@@ -181,16 +218,16 @@ parameter
          res_s_down_bar  pre contracted downward spinning reserve
          res_h_up_bar    pre contracted pump storage upward reserve
          res_h_down_bar  pre contracted pump storage downward reserve
-         shed_wind_bar   pre contracted wind bid
-         wind_frc_bar    dayahead wind forecast
-         wind_curt_bar   pre contracted wind curtailment
+         shed_ren_bar    pre contracted renewable bid
+         ren_frc_bar     dayahead renewable forecast
+         ren_curt_bar    pre contracted renewable curtailment
 
 *        Values fixed in congestion management
          gen_da_id_bar   pre contracted dayahead and intraday generation
          status_da_id_bar        dayahead and intraday generation status
          v_da_id_bar     pre contracted dayahead and intraday pump storage release
          w_da_id_bar     pre contracted dayahead and intraday pump storage pumping
-         wind_curt_da_id_bar     pre contracted dayahead and intraday wind curtailment
+         ren_curt_da_id_bar      pre contracted dayahead and intraday renewable curtailment
          infes_da_id_bar dayahead and intraday infeasibility
          transfer_da_id_bar dayahead and intraday transfer
 
@@ -198,7 +235,7 @@ parameter
          solved_id       solve status intraday models
          solved_da       solve status dayahead models
          solved_cm       solve status congestion management models
-         bid_wind_da_bar wind bidding in dayahead market
+         bid_ren_da_bar  renewable bidding in dayahead market
 
 *        For data upload
          demandup        demand upload
@@ -480,10 +517,10 @@ mustrun(t) = 0;
 *r('RES') = YES;
 
 * Dayahead forecast
-wind_fc_da(tau,c,ren) = renup(tau,c,ren,"Forecast")*countryup(c,"Capacity",ren);
+ren_fc_da(tau,c,ren) = renup(tau,c,ren,"Forecast")*countryup(c,"Capacity",ren);
 
 * realization
-wind_rel(tau,c,ren) = renup(tau,c,ren,"Realization")*countryup(c,"Capacity",ren);
+ren_rel(tau,c,ren) = renup(tau,c,ren,"Realization")*countryup(c,"Capacity",ren);
 *$stop
 *---------------------------- TECHNOLOGY DATA ----------------------------------
 * Construct power plant and storage sets
@@ -609,12 +646,12 @@ res_s_up_bar(pl,t) = 0;
 res_s_down_bar(pl,t) = 0;
 res_h_up_bar(j,t) = 0;
 res_h_down_bar(j,t) = 0;
-shed_wind_bar(r,t) = 0;
-wind_frc_bar(c,t) = 0;
-wind_fc(c,r,t) = 0;
+shed_ren_bar(r,t) = 0;
+ren_frc_bar(c,t) = 0;
+ren_fc(c,r,t) = 0;
 dem(t,c) = 0;
-bid_wind_da_bar(r,t) = 0;
-wind_curt_bar(r,n,t) = 0;
+bid_ren_da_bar(r,t) = 0;
+ren_curt_bar(r,n,t) = 0;
 avail(pl,t) = 0;
 
 * Intemediate report variables

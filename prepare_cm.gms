@@ -1,4 +1,40 @@
 $STITLE Prepare Input Data for Congestion Management Model
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 *-------------------------------------- Delete and unfix old setting -----------------------
 $include unfix
@@ -8,7 +44,7 @@ $IFTHEN %case%==1
 gen_da_id_bar(pl,t) = 0;
 v_da_id_bar(j,t) = 0;
 w_da_id_bar(j,t) = 0;
-wind_curt_da_id_bar(r,n,t) = 0;
+ren_curt_da_id_bar(r,n,t) = 0;
 status_da_id_bar(pl,t) = 0;
 infes_da_id_bar(n,t) = 0;
 transfer_da_id_bar(c,cc,t) = 0;
@@ -22,7 +58,7 @@ $ELSE
 gen_da_id_bar(pl,t,k) = 0;
 v_da_id_bar(j,t,k) = 0;
 w_da_id_bar(j,t,k) = 0;
-wind_curt_da_id_bar(r,n,t,k) = 0;
+ren_curt_da_id_bar(r,n,t,k) = 0;
 status_da_id_bar(pl,t,k) = 0;
 infes_da_id_bar(n,t,k) = 0;
 transfer_da_id_bar(c,cc,t,k) = 0;
@@ -46,7 +82,7 @@ $LABEL end_pst_det
 gen_da_id_bar(pl,t) = ir_gen_id(pl,t);
 v_da_id_bar(j,t) = ir_v_id(j,t);
 w_da_id_bar(j,t) = ir_w_id(j,t);
-wind_curt_da_id_bar(r,n,t) = ir_curt_da(r,n,t) + ir_curt_id(r,n,t);
+ren_curt_da_id_bar(r,n,t) = ir_curt_da(r,n,t) + ir_curt_id(r,n,t);
 status_da_id_bar(pl,t) = ir_status_id(pl,t);
 infes_da_id_bar(n,t) = ir_infes_id(n,t);
 transfer_da_id_bar(c,cc,t) = ID_TRANSFER.l(c,cc,t);
@@ -88,7 +124,7 @@ $LABEL end_pst_sto
 gen_da_id_bar(pl,t,k)$mapkt(k,t) = ir_gen_sto_id(pl,t,k);
 v_da_id_bar(j,t,k)$mapkt(k,t) = ir_v_sto_id(j,t,k);
 w_da_id_bar(j,t,k)$mapkt(k,t) = ir_w_sto_id(j,t,k);
-wind_curt_da_id_bar(r,n,t,k)$mapkt(k,t) = ir_curt_da(r,n,t) + ir_curt_sto_id(r,n,t,k);
+ren_curt_da_id_bar(r,n,t,k)$mapkt(k,t) = ir_curt_da(r,n,t) + ir_curt_sto_id(r,n,t,k);
 status_da_id_bar(pl,t,k)$mapkt(k,t) = ir_status_sto_id(pl,t,k);
 infes_da_id_bar(n,t,k)$mapkt(k,t) = ir_infes_sto_id(n,t,k);
 transfer_da_id_bar(c,cc,t,k)$mapkt(k,t) = ID_TRANSFER.l(c,cc,t,k);
@@ -126,7 +162,7 @@ $IFTHEN %case%==1
 CM_GEN_CM.l(pl,t) = 0;
 CM_V_CM.l(j,t) = 0;
 CM_W_CM.l(j,t) = 0;
-CM_WIND_CURT_CM.l(r,n,t) = 0;
+CM_REN_CURT_CM.l(r,n,t) = 0;
 CM_L.l(j,t) = ID_L.l(j,t);
 CM_V.l(j,t) = ID_V.l(j,t);
 CM_W.l(j,t) = ID_W.l(j,t);
@@ -150,7 +186,7 @@ $ELSE
 CM_GEN_CM.l(pl,t,k)$(mapkt(k,t)) = 0;
 CM_V_CM.l(j,t,k)$(mapkt(k,t)) = 0;
 CM_W_CM.l(j,t,k)$(mapkt(k,t)) = 0;
-CM_WIND_CURT_CM.l(r,n,t,k)$(mapkt(k,t)) = 0;
+CM_REN_CURT_CM.l(r,n,t,k)$(mapkt(k,t)) = 0;
 CM_L.l(j,t,k)$(mapkt(k,t)) = ID_L.l(j,t,k);
 CM_V.l(j,t,k)$(mapkt(k,t)) = ID_V.l(j,t,k);
 CM_W.l(j,t,k)$(mapkt(k,t)) = ID_W.l(j,t,k);

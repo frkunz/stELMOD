@@ -1,4 +1,40 @@
 $STITLE Determinisitic Intraday Model
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 Free Variable
          ID_COST         total cost
@@ -6,7 +42,7 @@ Free Variable
          ID_GEN_ID       biddings in intraday market
          ID_V_ID         intraday release
          ID_W_ID         intraday pumping
-         ID_WIND_CURT_ID curtailment intraday
+         ID_REN_CURT_ID  curtailment intraday
 
          ID_NETINPUT     netinput in MW
 ;
@@ -25,7 +61,7 @@ Positive Variable
 
          ID_TRANSFER     transactional transfer between countries
 
-         ID_WIND_BID     renewbale energy bid
+         ID_REN_BID      renewbale energy bid
          ID_INFES_MKT    feasibility slack on market clearing equation
 ;
 
@@ -70,8 +106,8 @@ Equations
          ID_def_W                definition total reservoir pumping
 
 *        Renewables
-         ID_def_WIND_BID         definition of renewable bidding in intraday market
-         ID_res_WIND_BID         upper bound on wind bidding
+         ID_def_REN_BID          definition of renewable bidding in intraday market
+         ID_res_REN_BID          upper bound on renewable bidding
 
 *        Must run
          ID_res_mustr            intraday must run constraint
@@ -88,7 +124,7 @@ ID_obj..
          ID_COST         =E=     (
                                  sum((t_id(t),pl)$cap_max(pl), (mc(pl)*ID_GEN(pl,t) + ID_CS(pl,t) + ID_CD(pl,t)))
                                  + sum((t_id(t),n), pen_infes*ID_INFES_MKT(n,t))
-                                 + sum((t_id(t),n,r), c_curt(r)*(wind_curt_bar(r,n,t) + ID_WIND_CURT_ID(r,n,t)))
+                                 + sum((t_id(t),n,r), c_curt(r)*(ren_curt_bar(r,n,t) + ID_REN_CURT_ID(r,n,t)))
                                  )
                                  /scaler
 ;
@@ -103,14 +139,14 @@ ID_def_CD(pl,t_id(t))$(cap_max(pl) and su(pl))..
 
 *---------------------------------------- MARKET CLEARING -----------------------------------------------
 ID_mkt(t_id(t))..
-         sum(pl$cap_max(pl), ID_GEN(pl,t)) + sum(j$v_max(j), ID_V(j,t) - ID_W(j,t)) + sum((n,r), ID_WIND_BID(r,n,t)) + sum(n,ID_INFES_MKT(n,t))
+         sum(pl$cap_max(pl), ID_GEN(pl,t)) + sum(j$v_max(j), ID_V(j,t) - ID_W(j,t)) + sum((n,r), ID_REN_BID(r,n,t)) + sum(n,ID_INFES_MKT(n,t))
                          =E=
                                  sum(c, dem(t,c)) + sum(n, exchange(n,t))
 ;
 
 ID_mkt_country(c,t_id(t))$dem(t,c)..
          sum(n$mapnc(n,c), sum(pl$(mappln(pl,n) and cap_max(pl)), ID_GEN(pl,t))) + sum(n$mapnc(n,c), sum(j$(mappln(j,n) and v_max(j)), ID_V(j,t) - ID_W(j,t))) +
-          sum(n$mapnc(n,c), sum(r, ID_WIND_BID(r,n,t))) + sum(n$mapnc(n,c), ID_INFES_MKT(n,t))
+          sum(n$mapnc(n,c), sum(r, ID_REN_BID(r,n,t))) + sum(n$mapnc(n,c), ID_INFES_MKT(n,t))
                          =E=
                                  dem(t,c) + sum(n, exchange(n,t))
                                  + sum(cc$ntc(c,cc,t), ID_TRANSFER(c,cc,t))
@@ -119,7 +155,7 @@ ID_mkt_country(c,t_id(t))$dem(t,c)..
 
 ID_mkt_node(n,t_id(t))..
          sum(pl$mappln(pl,n), ID_GEN(pl,t)) + sum(j$mappln(j,n), ID_V(j,t) - ID_W(j,t)) +
-          sum(r, ID_WIND_BID(r,n,t)) + ID_INFES_MKT(n,t)
+          sum(r, ID_REN_BID(r,n,t)) + ID_INFES_MKT(n,t)
                          =E=
                                  sum(c$mapnc(n,c), splitdem(n)*dem(t,c))
                                  + exchange(n,t)
@@ -224,15 +260,15 @@ ID_res_mrCHP(pl,t_id(t))$mrCHP(pl,t)..
 ;
 
 *--------------------------------------------- RENEWABLES ----------------------------------------------------
-ID_def_WIND_BID(r,n,t_id(t))..
-         ID_WIND_BID(r,n,t)
-                         =E=     SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_tmp(c,ren,t))) - wind_curt_bar(r,n,t) - ID_WIND_CURT_ID(r,n,t)
+ID_def_REN_BID(r,n,t_id(t))..
+         ID_REN_BID(r,n,t)
+                         =E=     SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_tmp(c,ren,t))) - ren_curt_bar(r,n,t) - ID_REN_CURT_ID(r,n,t)
 ;
 
 
-ID_res_WIND_BID(r,n,t_id(t))..
-         SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_tmp(c,ren,t)))
-                         =G=     ID_WIND_BID(r,n,t)
+ID_res_REN_BID(r,n,t_id(t))..
+         SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_tmp(c,ren,t)))
+                         =G=     ID_REN_BID(r,n,t)
 ;
 
 *--------------------------------------------- NETWORK ----------------------------------------------------
@@ -288,8 +324,8 @@ model intraday /
                   ID_res_mrCHP
 
 *                Renewables
-                  ID_def_WIND_BID
-                  ID_res_WIND_BID
+                  ID_def_REN_BID
+                  ID_res_REN_BID
 
 *                Network
                   ID_res_ntc

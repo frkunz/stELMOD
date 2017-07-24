@@ -1,4 +1,40 @@
 $STITLE Dayahead Model
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 Free Variable
          DA_COST            total cost
@@ -22,8 +58,8 @@ Positive Variable
 
          DA_TRANSFER        transactional transfer between countries
 
-         DA_WIND_BID        renewbale energy bid
-         DA_WIND_CURT       renewable energy curtailment
+         DA_REN_BID         renewbale energy bid
+         DA_REN_CURT        renewable energy curtailment
          DA_INFES_MKT       slack in market clearing equation
 ;
 
@@ -76,7 +112,7 @@ Equations
          DA_res_mrCHP       must run CHP plants
 
 *        Renewables
-         DA_def_WIND_BID    definition of renewable bidding
+         DA_def_REN_BID    definition of renewable bidding
 
 *        Network
          DA_res_ntc         transactional transfer limit
@@ -90,7 +126,7 @@ DA_obj..
                                  + sum((t_da(t),pl)$cap_max(pl), cr(pl)*sum(res, DA_RES_S(res,pl,t) + DA_RES_NS(pl,t)$plns(res,pl)))
                                  + sum((t_da(t),j)$v_max(j), cr(j)*sum(res, DA_RES_H(res,j,t)))
                                  + sum((t_da(t),n), pen_infes*DA_INFES_MKT(n,t))
-                                 + sum((t_da(t),r,n), c_curt(r)*DA_WIND_CURT(r,n,t))
+                                 + sum((t_da(t),r,n), c_curt(r)*DA_REN_CURT(r,n,t))
                                  )/scaler
 ;
 
@@ -104,7 +140,7 @@ DA_def_CD(pl,t_da(t))$(cap_max(pl) and su(pl))..
 
 *------------------------------------- MARKET CLEARING EQUATIONS -----------------------------------
 DA_mkt(t_da(t))..
-         sum(pl$cap_max(pl), DA_GEN(pl,t)) + sum(j$v_max(j), DA_V(j,t) - DA_W(j,t)) + sum((r,n), DA_WIND_BID(r,n,t)) + sum(n, DA_INFES_MKT(n,t))
+         sum(pl$cap_max(pl), DA_GEN(pl,t)) + sum(j$v_max(j), DA_V(j,t) - DA_W(j,t)) + sum((r,n), DA_REN_BID(r,n,t)) + sum(n, DA_INFES_MKT(n,t))
                          =E=
                                  sum(c, dem(t,c)) + sum(n, exchange(n,t))
 ;
@@ -112,7 +148,7 @@ DA_mkt(t_da(t))..
 DA_mkt_country(c,t_da(t))$dem(t,c)..
           sum(n$mapnc(n,c), sum(pl$(mappln(pl,n) and cap_max(pl)), DA_GEN(pl,t)))
           + sum(n$mapnc(n,c), sum(j$(mappln(j,n) and v_max(j)), DA_V(j,t) - DA_W(j,t)))
-          + sum(n$mapnc(n,c), sum(r, DA_WIND_BID(r,n,t))) + sum(n$mapnc(n,c), DA_INFES_MKT(n,t))
+          + sum(n$mapnc(n,c), sum(r, DA_REN_BID(r,n,t))) + sum(n$mapnc(n,c), DA_INFES_MKT(n,t))
                          =E=
                                  dem(t,c) + sum(n, exchange(n,t))
                                  + sum(cc$ntc(c,cc,t), DA_TRANSFER(c,cc,t))
@@ -121,7 +157,7 @@ DA_mkt_country(c,t_da(t))$dem(t,c)..
 
 DA_mkt_node(n,t_da(t))..
           sum(pl$(mappln(pl,n) and cap_max(pl)), DA_GEN(pl,t)) + sum(j$(mappln(j,n) and v_max(j)), DA_V(j,t) - DA_W(j,t))
-          + sum(r, DA_WIND_BID(r,n,t)) + DA_INFES_MKT(n,t)
+          + sum(r, DA_REN_BID(r,n,t)) + DA_INFES_MKT(n,t)
                          =E=
                                  sum(c$mapnc(n,c), splitdem(n)*dem(t,c))
                                  + exchange(n,t)
@@ -231,9 +267,9 @@ DA_res_mrCHP(pl,t_da(t))$mrCHP(pl,t)..
 
 *--------------------------------------------- RENEWABLES ----------------------------------------------------
 
-DA_def_WIND_BID(r,n,t_da(t))..
-         DA_WIND_BID(r,n,t)
-                         =E=     SUM(c$mapnc(n,c), SUM(ren, wind_fc(c,ren,t)*splitren(n,ren))) - DA_WIND_CURT(r,n,t)
+DA_def_REN_BID(r,n,t_da(t))..
+         DA_REN_BID(r,n,t)
+                         =E=     SUM(c$mapnc(n,c), SUM(ren, ren_fc(c,ren,t)*splitren(n,ren))) - DA_REN_CURT(r,n,t)
 ;
 
 *--------------------------------------------- NETWORK ----------------------------------------------------
@@ -287,7 +323,7 @@ model dayahead /
                   DA_res_mrCHP
 
 *                Renewables
-                  DA_def_WIND_BID
+                  DA_def_REN_BID
 
 *                Network constraints
                   DA_res_ntc

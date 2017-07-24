@@ -1,9 +1,45 @@
 $STITLE Prepare Input Data for Dayahead Model within Rolling Planning
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 *-------------------------------------- Delete and unfix old setting -----------------------
 $include unfix
 
-wind_fc(c,r,t) = 0;
+ren_fc(c,r,t) = 0;
 dem(t,c) = 0;
 dem_res_up_2(t,c)=0;
 dem_res_down_2(t,c)=0;
@@ -13,8 +49,8 @@ dem_res_down_3(t,c) = 0;
 exchange(n,t) = 0;
 ntc(c,cc,t) = 0;
 *------------------------------------- DATA ----------------------------------------------
-$ife '%case%=1' $set wind_param_da wind_rel
-$ife NOT '%case%=1' $set wind_param_da wind_fc_da
+$ife '%case%=1' $set ren_param_da ren_rel
+$ife NOT '%case%=1' $set ren_param_da ren_fc_da
 
 
 * First loop determines simulation periods depending on time lag for market clearing (normaly 12 hours)
@@ -22,13 +58,13 @@ loop(ttau$(ord(ttau) ge ord(tau) + 24 - clr_da + 1 and ord(ttau) le ord(tau) + 2
 *        Second loop maps the simulation periods to model periods
          loop(t$(ord(t) eq ord(ttau) - ord(tau) - clr_da),
 *                DEMAND
-                 dem(t,c) = SUM(n$mapnc(n,c), splitdem(n)) * d(ttau,c);
+                 dem(t,c) 				 = SUM(n$mapnc(n,c), splitdem(n)) * d(ttau,c);
 
 *                AVAILABILITY
-                 avail(pl,t) = avail_tau(ttau,pl);
+                 avail(pl,t) 			 = avail_tau(ttau,pl);
 
-*                WIND
-                 wind_fc(c,ren,t) = %wind_param_da%(ttau,c,ren);
+*                RENEWABLE
+                 ren_fc(c,ren,t) 		 = %ren_param_da%(ttau,c,ren);
 
 *                RESERVE
                  dem_res(res,t,c)        = d_res(res,ttau,c);
@@ -68,9 +104,9 @@ DA_RES_NS.l(pl,t) = 0;
 DA_RES_H.l(res,j,t) = 0;
 DA_GEN_MIN.l(pl,t) = 0;
 DA_GEN_MAX.l(pl,t) = 0;
-DA_WIND_CURT.l(r,n,t) = 0;
+DA_REN_CURT.l(r,n,t) = 0;
 DA_INFES_MKT.l(n,t) = 0;
-DA_WIND_BID.l(r,n,t) = 0;
+DA_REN_BID.l(r,n,t) = 0;
 DA_TRANSFER.L(c,cc,t) = 0;
 
 DA_ON.up(pl,t) = noplants(pl);

@@ -1,4 +1,40 @@
 $STITLE Stochastic Congestion Management Model
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 Free Variable
          CM_COST            total cost
@@ -7,7 +43,7 @@ Free Variable
          CM_GEN_CM          change of generation
          CM_V_CM            change in release
          CM_W_CM            change in pumping
-         CM_WIND_CURT_CM    curtailment congestion management
+         CM_REN_CURT_CM     curtailment congestion management
 
          CM_TRANSFER_CM     commercial transfer change
 
@@ -29,7 +65,7 @@ Positive Variable
 
          CM_HVDCFLOW        flow on hvdc lines
 
-         CM_WIND_BID        renewbale energy bid
+         CM_REN_BID         renewbale energy bid
          CM_INFES_MKT       slack in market clearing equation (increase of generation)
          CM_INFES_MKT2      slack in market clearing equation (decrease of generation)
 ;
@@ -73,8 +109,8 @@ Equations
          CM_def_W           total reservoir pumping
 
 *        Renewables
-         CM_def_WIND_BID    definition of renewable bidding in intraday market
-         CM_res_WIND_BID    upper bound on wind bidding
+         CM_def_REN_BID     definition of renewable bidding in intraday market
+         CM_res_REN_BID     upper bound on renewable bidding
 
 *        Must run constraint
          CM_res_mustr       must run constraint
@@ -96,7 +132,7 @@ CM_obj..
          CM_COST         =E=     (
                                  sum((mapkt(k,t_cm(t)),pl)$cap_max(pl), prob(t,k)*(mc(pl)*CM_GEN_CM(pl,t,k) + CM_CS(pl,t,k) + CM_CD(pl,t,k)))
                                  + sum((mapkt(k,t_cm(t)),n), prob(t,k)*pen_infes*(CM_INFES_MKT(n,t,k)+CM_INFES_MKT2(n,t,k)))
-                                 + sum((mapkt(k,t_cm(t)),r,n), prob(t,k)*c_curt(r)*CM_WIND_CURT_CM(r,n,t,k))
+                                 + sum((mapkt(k,t_cm(t)),r,n), prob(t,k)*c_curt(r)*CM_REN_CURT_CM(r,n,t,k))
                                  )
                                  /scaler
 ;
@@ -113,7 +149,7 @@ CM_def_CD(pl,mapkt(k,t_cm(t)))$(cap_max(pl) and su(pl))..
 CM_mkt(mapkt(k,t_cm(t)))..
          sum(pl$cap_max(pl), CM_GEN_CM(pl,t,k))
          + sum(j$v_max(j), CM_V_CM(j,t,k) - CM_W_CM(j,t,k))
-         + sum((r,n), CM_WIND_CURT_CM(r,n,t,k))
+         + sum((r,n), CM_REN_CURT_CM(r,n,t,k))
          + sum(n, CM_INFES_MKT(n,t,k)) - sum(n, CM_INFES_MKT2(n,t,k))
                          =E=
                                  0
@@ -122,7 +158,7 @@ CM_mkt(mapkt(k,t_cm(t)))..
 CM_mkt_country(c,mapkt(k,t_cm(t)))..
          sum(n$mapnc(n,c), sum(pl$(mappln(pl,n) and cap_max(pl)), CM_GEN_CM(pl,t,k)))
          + sum(n$mapnc(n,c), sum(j$(mappln(j,n) and v_max(j)), CM_V_CM(j,t,k) - CM_W_CM(j,t,k)))
-         - sum((n)$mapnc(n,c), sum(r, CM_WIND_CURT_CM(r,n,t,k)))
+         - sum((n)$mapnc(n,c), sum(r, CM_REN_CURT_CM(r,n,t,k)))
          + sum(n$mapnc(n,c), CM_INFES_MKT(n,t,k)) - sum(n$mapnc(n,c), CM_INFES_MKT2(n,t,k))
                          =E=
                                  + sum(cc$ntc(c,cc,t), CM_TRANSFER_CM(c,cc,t,k))
@@ -132,7 +168,7 @@ CM_mkt_country(c,mapkt(k,t_cm(t)))..
 CM_mkt_node(n,mapkt(k,t_cm(t)))..
           sum(pl$(mappln(pl,n) and cap_max(pl)), CM_GEN(pl,t,k))
           + sum(j$(mappln(j,n) and v_max(j)), CM_V(j,t,k) - CM_W(j,t,k))
-          + sum((r), CM_WIND_BID(r,n,t,k))
+          + sum((r), CM_REN_BID(r,n,t,k))
           + infes_da_id_bar(n,t,k) + CM_INFES_MKT(n,t,k) - CM_INFES_MKT2(n,t,k)
                          =E=
                                  sum(c$mapnc(n,c), splitdem(n)*dem(t,c))
@@ -262,15 +298,15 @@ CM_res_mrCHP(pl,mapkt(k,t_cm(t)))$mrCHP(pl,t)..
 ;
 
 *--------------------------------------------- RENEWABLES ----------------------------------------------------
-CM_def_WIND_BID(r,n,mapkt(k,t_cm(t)))..
-         CM_WIND_BID(r,n,t,k)
-                         =E=     SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_sto_tmp(c,ren,t,k))) - wind_curt_da_id_bar(r,n,t,k) - CM_WIND_CURT_CM(r,n,t,k)
+CM_def_REN_BID(r,n,mapkt(k,t_cm(t)))..
+         CM_REN_BID(r,n,t,k)
+                         =E=     SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_sto_tmp(c,ren,t,k))) - ren_curt_da_id_bar(r,n,t,k) - CM_REN_CURT_CM(r,n,t,k)
 ;
 
 
-CM_res_WIND_BID(r,n,mapkt(k,t_cm(t)))..
-         SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_sto_tmp(c,ren,t,k)))
-                         =G=     CM_WIND_BID(r,n,t,k)
+CM_res_REN_BID(r,n,mapkt(k,t_cm(t)))..
+         SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_sto_tmp(c,ren,t,k)))
+                         =G=     CM_REN_BID(r,n,t,k)
 ;
 *--------------------------------------------- NETWORK ----------------------------------------------------
 CM_res_pmax_pos(l,mapkt(k,t_cm(t)))$cap_l(l)..
@@ -347,8 +383,8 @@ model congestionmanagement /
                   CM_def_W
 
 *                Renewables
-                  CM_def_WIND_BID
-                  CM_res_WIND_BID
+                  CM_def_REN_BID
+                  CM_res_REN_BID
 
 *                Must Run
                   CM_res_mustr

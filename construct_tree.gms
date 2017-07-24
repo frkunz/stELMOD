@@ -1,4 +1,41 @@
 $STITLE Construct Two-Stage Tree
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
+
 set
          h               forcast hours
          k               nodes in stochastic tree
@@ -48,9 +85,9 @@ $offUNDF
 *;
 
 ances_red(tau,k,kk) = ances_ini(k,kk);
-ren_frc(c,ren,tau,h,k)$stage(k,h) = sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), wind_rel(ttau,c,ren));
-ren_frc(c,'wind onshore',tau,h,k)$stage(k,h) = max(min(sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), wind_rel(ttau,c,'wind onshore')) + tree_upload(k,h,'Forecast error')*countryup(c,"Capacity",'wind onshore'),countryup(c,"Capacity",'wind onshore')),0);
-ren_frc(c,'wind offshore',tau,h,k)$stage(k,h) = max(min(sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), wind_rel(ttau,c,'wind offshore')) + tree_upload(k,h,'Forecast error')*countryup(c,"Capacity",'wind offshore'),countryup(c,"Capacity",'wind onshore')),0);
+ren_frc(c,ren,tau,h,k)$stage(k,h) = sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), ren_rel(ttau,c,ren));
+ren_frc(c,'wind onshore',tau,h,k)$stage(k,h) = max(min(sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), ren_rel(ttau,c,'wind onshore')) + tree_upload(k,h,'Forecast error')*countryup(c,"Capacity",'wind onshore'),countryup(c,"Capacity",'wind onshore')),0);
+ren_frc(c,'wind offshore',tau,h,k)$stage(k,h) = max(min(sum(ttau$(ord(ttau) eq ord(tau) + ord(h) - 1), ren_rel(ttau,c,'wind offshore')) + tree_upload(k,h,'Forecast error')*countryup(c,"Capacity",'wind offshore'),countryup(c,"Capacity",'wind onshore')),0);
 ren_frc_prob(tau,h,k)$stage(k,h) = tree_upload(k,h,'Probability');
 
 stage2(k,t)$sum(h$(ord(h) eq ord(t)), stage(k,h)) = YES;

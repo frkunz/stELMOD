@@ -316,7 +316,7 @@ ir_res_h(res,j,t)$(ord(t) le 24-lag_id) = DA_RES_H.L(res,j,t+lag_id);
 ir_v_da(j,t)$(ord(t) le 24-lag_id) = DA_V.L(j,t+lag_id);
 ir_w_da(j,t)$(ord(t) le 24-lag_id) = DA_W.L(j,t+lag_id);
 *ir_level_da(j,t)$(ord(t) le 24-lag_id) = DA_L.L(j,t+lag_id);
-ir_curt_da(r,n,t)$(ord(t) le 24-lag_id) = DA_WIND_CURT.L(r,n,t+lag_id);
+ir_curt_da(r,n,t)$(ord(t) le 24-lag_id) = DA_REN_CURT.L(r,n,t+lag_id);
 ir_price_da(c,t)$(ord(t) le 24-lag_id) = DA_mkt.M(t+lag_id)*scaler + DA_mkt_country.M(c,t+lag_id)*scaler;
 ir_transfer_da(c,cc,t)$(ord(t) le 24-lag_id) = DA_TRANSFER.L(c,cc,t+lag_id);
 
@@ -332,8 +332,8 @@ loop(tau$(ord(tau) le 24),
                  fr_da_w(j,tau) = DA_W.L(j,tt);
                  fr_da_v(j,tau) = DA_V.L(j,tt);
                  fr_da_l(j,tau) = DA_L.L(j,tt);
-                 fr_da_ren(r,tau) = sum(n, DA_WIND_BID.L(r,n,tt));
-                 fr_da_curt(r,tau) = sum(n, DA_WIND_CURT.L(r,n,tt));
+                 fr_da_ren(r,tau) = sum(n, DA_REN_BID.L(r,n,tt));
+                 fr_da_curt(r,tau) = sum(n, DA_REN_CURT.L(r,n,tt));
                  fr_da_res_s(res,pl,tau) = DA_RES_S.L(res,pl,tt);
                  fr_da_res_ns(pl,tau) = DA_RES_NS.L(pl,tt);
                  fr_da_res_h(res,j,tau) = DA_RES_H.L(res,j,tt);
@@ -347,7 +347,7 @@ loop(tau$(ord(tau) le 24),
                  fr_da_cs(pl,tau) = DA_CS.L(pl,tt);
                  fr_da_cd(pl,tau) = DA_CD.L(pl,tt);
                  fr_da_status(pl,tau) =  DA_ON.L(pl,tt);
-                 fr_da_frc(c,r,tau) = wind_fc(c,r,tt);
+                 fr_da_frc(c,r,tau) = ren_fc(c,r,tt);
 
 *                Country level reports
                  fr_da_price_country(c,tau) = DA_mkt_country.M(c,tt)*scaler;
@@ -359,9 +359,9 @@ loop(tau$(ord(tau) le 24),
 *                 fr_da_price_node(n,tau) = DA_mkt_node.M(n,tt)*scaler;
 *                 fr_da_netin_node(n,tau) = DA_NETINPUT.L(n,tt);
 *                 fr_da_lineflow(l,tau)   = sum(n, ptdf(l,n)*DA_NETINPUT.L(n,tt));
-                 fr_da_curt_node(r,n,tau)  = DA_WIND_CURT.L(r,n,tt);
-                 fr_da_ren_node(r,n,tau)   = DA_WIND_BID.L(r,n,tt);
-                 fr_da_ren_fc_node(r,n,tau) = SUM(c$mapnc(n,c), SUM(ren, wind_fc(c,ren,tt)*splitren(n,ren)));
+                 fr_da_curt_node(r,n,tau)  = DA_REN_CURT.L(r,n,tt);
+                 fr_da_ren_node(r,n,tau)   = DA_REN_BID.L(r,n,tt);
+                 fr_da_ren_fc_node(r,n,tau) = SUM(c$mapnc(n,c), SUM(ren, ren_fc(c,ren,tt)*splitren(n,ren)));
 *                 fr_da_price_line_pos(l,tau) = DA_res_pmax_pos.M(l,tt)*scaler;
 *                 fr_da_price_line_neg(l,tau) = DA_res_pmax_neg.M(l,tt)*scaler;
          );
@@ -424,7 +424,7 @@ $IFTHEN %case%==1
          ir_level_id(j,t)        = ID_L.L(j,t);
          ir_v_id(j,t)            = ID_V.l(j,t);
          ir_w_id(j,t)            = ID_W.l(j,t);
-         ir_curt_id(r,n,t)       = ID_WIND_CURT_ID.l(r,n,t);
+         ir_curt_id(r,n,t)       = ID_REN_CURT_ID.l(r,n,t);
          ir_infes_id(n,t)        = ID_INFES_MKT.l(n,t);
 *         display  ir_level_id;
 $ELSE
@@ -437,7 +437,7 @@ $ELSE
          ir_gen_sto_id(pl,t,k)           = ID_GEN.L(pl,t,k);
          ir_v_sto_id(j,t,k)              = ID_V.l(j,t,k);
          ir_w_sto_id(j,t,k)              = ID_W.l(j,t,k);
-         ir_curt_sto_id(r,n,t,k)         = ID_WIND_CURT_ID.l(r,n,t,k);
+         ir_curt_sto_id(r,n,t,k)         = ID_REN_CURT_ID.l(r,n,t,k);
          ir_infes_sto_id(n,t,k)          = ID_INFES_MKT.l(n,t,k);
 *         display  ir_level_id;
 $ENDIF
@@ -447,14 +447,14 @@ $IF %solve_id%==NO $GOTO end_id
          loop((tfirst%set_sto_root%),
 *                Generation
                   fr_id_gen_to(pl,tau+lag_id) = ID_GEN.L(pl,tfirst%set_sto_root%);
-                  fr_id_ren_to(r,tau+lag_id) = sum(n, ID_WIND_BID.L(r,n,tfirst%set_sto_root%));
+                  fr_id_ren_to(r,tau+lag_id) = sum(n, ID_REN_BID.L(r,n,tfirst%set_sto_root%));
                   fr_id_w_to(j,tau+lag_id) = ID_W.L(j,tfirst%set_sto_root%);
                   fr_id_v_to(j,tau+lag_id) = ID_V.L(j,tfirst%set_sto_root%);
                   fr_id_l(j,tau+lag_id) = ID_L.L(j,tfirst%set_sto_root%);
 
 *                Intraday corrections
                   fr_id_gen_id(pl,tau+lag_id) = ID_GEN_ID.L(pl,tfirst%set_sto_root%);
-                  fr_id_ren_id(r,tau+lag_id) = sum(n, ID_WIND_CURT_ID.L(r,n,tfirst%set_sto_root%));
+                  fr_id_ren_id(r,tau+lag_id) = sum(n, ID_REN_CURT_ID.L(r,n,tfirst%set_sto_root%));
                   fr_id_w_id(j,tau+lag_id) = ID_W_ID.L(j,tfirst%set_sto_root%);
                   fr_id_v_id(j,tau+lag_id) = ID_V_ID.L(j,tfirst%set_sto_root%);
 
@@ -466,9 +466,9 @@ $IF %solve_id%==NO $GOTO end_id
                   fr_id_infes(tau+lag_id) = sum(n, ID_INFES_MKT.L(n,tfirst%set_sto_root%));
                   fr_id_price(tau+lag_id) = ID_mkt.M(%set_sto_root2%tfirst)*scaler;
 $IFTHEN %case%==1
-                  fr_id_frc(r,tau+lag_id) = sum((ren,c), wind_tmp(c,ren,tfirst));
+                  fr_id_frc(r,tau+lag_id) = sum((ren,c), ren_tmp(c,ren,tfirst));
 $ELSE
-                  fr_id_frc(r,tau+lag_id) = sum((ren,c), wind_sto_tmp(c,ren,tfirst%set_sto_root%));
+                  fr_id_frc(r,tau+lag_id) = sum((ren,c), ren_sto_tmp(c,ren,tfirst%set_sto_root%));
 $ENDIF
 *                country level report
                   fr_id_price_country(c,tau+lag_id) = ID_mkt_country.M(c%set_sto_root%,tfirst)*scaler;
@@ -480,12 +480,12 @@ $ENDIF
 *                  fr_id_price_node(n,tau+lag_id) = ID_MKT_NODE.M(n%set_sto_root%,tfirst)*scaler;
 *                  fr_id_netin_node(n,tau+lag_id) = ID_NETINPUT.L(n,tfirst%set_sto_root%);
 *                  fr_id_lineflow(l,tau+lag_id) = sum(n, ptdf(l,n)*ID_NETINPUT.L(n,tfirst%set_sto_root%));
-                  fr_id_curt_node(r,n,tau+lag_id) = ID_WIND_CURT_ID.L(r,n,tfirst%set_sto_root%);
-                  fr_id_ren_node(r,n,tau+lag_id) = ID_WIND_BID.L(r,n,tfirst%set_sto_root%);
+                  fr_id_curt_node(r,n,tau+lag_id) = ID_REN_CURT_ID.L(r,n,tfirst%set_sto_root%);
+                  fr_id_ren_node(r,n,tau+lag_id) = ID_REN_BID.L(r,n,tfirst%set_sto_root%);
 $IFTHEN %case%==1
-                  fr_id_ren_fc_node(r,n,tau+lag_id) = SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_tmp(c,ren,tfirst)));
+                  fr_id_ren_fc_node(r,n,tau+lag_id) = SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_tmp(c,ren,tfirst)));
 $ELSE
-                  fr_id_ren_fc_node(r,n,tau+lag_id) = SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*wind_sto_tmp(c,ren,tfirst%set_sto_root%)));
+                  fr_id_ren_fc_node(r,n,tau+lag_id) = SUM(c$mapnc(n,c), SUM(ren, splitren(n,ren)*ren_sto_tmp(c,ren,tfirst%set_sto_root%)));
 $ENDIF
 *                  fr_id_price_line_pos(l,tau+lag_id) =  ID_res_pmax_pos.M(l%set_sto_root%,tfirst)*scaler;
 *                  fr_id_price_line_neg(l,tau+lag_id) =  ID_res_pmax_neg.M(l%set_sto_root%,tfirst)*scaler;
@@ -526,14 +526,14 @@ $IFTHEN %case%==1
          CM_GEN_CM.fx(pl,t)$(cap_max(pl)) = 0;
          CM_W_CM.fx(j,t)$(l_max(j)) = 0;
          CM_V_CM.fx(j,t)$(l_max(j)) = 0;
-         CM_WIND_CURT_CM.fx(r,n,t) = 0;
+         CM_REN_CURT_CM.fx(r,n,t) = 0;
          CM_ALPHA.fx(l,t) = 0;
 
 $ELSE
          CM_GEN_CM.fx(pl,t,k)$(mapkt(k,t) and cap_max(pl)) = 0;
          CM_W_CM.fx(j,t,k)$(mapkt(k,t) and l_max(j)) = 0;
          CM_V_CM.fx(j,t,k)$(mapkt(k,t) and l_max(j)) = 0;
-         CM_WIND_CURT_CM.fx(r,n,t,k)$(mapkt(k,t)) = 0;
+         CM_REN_CURT_CM.fx(r,n,t,k)$(mapkt(k,t)) = 0;
          CM_ALPHA.fx(l,t,k)$(mapkt(k,t)) = 0;
 
 $ENDIF
@@ -607,7 +607,7 @@ $IFTHEN %case%==1
 
          ir_status_cm(pl,t)      = CM_ON.L(pl,t);
          ir_delta_gen_cm(pl,t)   = CM_GEN_CM.L(pl,t);
-         ir_curt_cm(r,n,t)       = CM_WIND_CURT_CM.L(r,n,t);
+         ir_curt_cm(r,n,t)       = CM_REN_CURT_CM.L(r,n,t);
          ir_level_cm(j,t)        = CM_L.L(j,t);
          ir_v_cm(j,t)            = CM_V.l(j,t);
          ir_w_cm(j,t)            = CM_W.l(j,t);
@@ -617,7 +617,7 @@ $ELSE
 *        Expected values
          ir_status_cm(pl,t)      = sum(mapkt(k,t), prob(t,k)*CM_ON.L(pl,t,k));
          ir_delta_gen_cm(pl,t)   = sum(mapkt(k,t), prob(t,k)*CM_GEN_CM.L(pl,t,k));
-         ir_curt_cm(r,n,t)       = sum(mapkt(k,t), prob(t,k)*CM_WIND_CURT_CM.L(r,n,t,k));
+         ir_curt_cm(r,n,t)       = sum(mapkt(k,t), prob(t,k)*CM_REN_CURT_CM.L(r,n,t,k));
          ir_level_cm(j,t)        = sum(mapkt(k,t), prob(t,k)*CM_L.L(j,t,k));
 *        Stochastic values
          ir_v_sto_cm(j,t,k)      = CM_V.l(j,t,k);
@@ -641,7 +641,7 @@ $IF %solve_cm%==NO $GOTO end_cm
          loop((tfirst%set_sto_root%),
 *                Redispatch
                   fr_cm_delta_gen(pl,tau+lag_id) = CM_GEN_CM.L(pl,tfirst%set_sto_root%);
-                  fr_cm_ren_curt(r,tau+lag_id) = sum(n, CM_WIND_CURT_CM.L(r,n,tfirst%set_sto_root%));
+                  fr_cm_ren_curt(r,tau+lag_id) = sum(n, CM_REN_CURT_CM.L(r,n,tfirst%set_sto_root%));
                   fr_cm_l(j,tau+lag_id) = CM_L.L(j,tfirst%set_sto_root%);
                   fr_cm_w_cm(j,tau+lag_id) = CM_W_CM.L(j,tfirst%set_sto_root%);
                   fr_cm_v_cm(j,tau+lag_id) = CM_V_CM.L(j,tfirst%set_sto_root%);
@@ -662,7 +662,7 @@ $IF %solve_cm%==NO $GOTO end_cm
                   fr_cm_price_node(n,tau+lag_id) = CM_MKT_NODE.M(n%set_sto_root%,tfirst)*scaler;
                   fr_cm_netin_node(n,tau+lag_id) = CM_NETINPUT.L(n,tfirst%set_sto_root%);
                   fr_cm_lineflow(l,tau+lag_id) = CM_res_pmax_neg.l(l%set_sto_root%,tfirst);
-                  fr_cm_curt_node(r,n,tau+lag_id) = CM_WIND_CURT_CM.L(r,n,tfirst%set_sto_root%);
+                  fr_cm_curt_node(r,n,tau+lag_id) = CM_REN_CURT_CM.L(r,n,tfirst%set_sto_root%);
                   fr_cm_price_line_pos(l,tau+lag_id) =  CM_res_pmax_pos.M(l%set_sto_root%,tfirst)*scaler;
                   fr_cm_price_line_neg(l,tau+lag_id) =  CM_res_pmax_neg.M(l%set_sto_root%,tfirst)*scaler;
                   fr_cm_hvdcflow(hvdc(n,nn),tau+lag_id) = CM_HVDCFLOW.L(n,nn,tfirst%set_sto_root%);
@@ -724,7 +724,7 @@ $                include prepare_da
                                    ir_v_da(j,tt) = DA_V.L(j,t);
                                    ir_w_da(j,tt) = DA_W.L(j,t);
                                    ir_level_da(j,tt) = DA_L.L(j,t);
-                                   ir_curt_da(r,n,tt) = DA_WIND_CURT.L(r,n,t);
+                                   ir_curt_da(r,n,tt) = DA_REN_CURT.L(r,n,t);
                                    ir_price_da(c,tt) = DA_mkt.M(t)*scaler + DA_mkt_country.M(c,t)*scaler;
                                    ir_transfer_da(c,cc,tt) = DA_TRANSFER.L(c,cc,t);
                          );
@@ -738,8 +738,8 @@ $                include prepare_da
                          fr_da_w(j,tau+tautemp) = DA_W.L(j,t);
                          fr_da_v(j,tau+tautemp) = DA_V.L(j,t);
                          fr_da_l(j,tau+tautemp) = DA_L.L(j,t);
-                         fr_da_ren(r,tau+tautemp) = sum(n, DA_WIND_BID.L(r,n,t));
-                         fr_da_curt(r,tau+tautemp) = sum(n, DA_WIND_CURT.L(r,n,t));
+                         fr_da_ren(r,tau+tautemp) = sum(n, DA_REN_BID.L(r,n,t));
+                         fr_da_curt(r,tau+tautemp) = sum(n, DA_REN_CURT.L(r,n,t));
                          fr_da_res_s(res,pl,tau+tautemp) = DA_RES_S.L(res,pl,t);
                          fr_da_res_ns(pl,tau+tautemp) = DA_RES_NS.L(pl,t);
                          fr_da_res_h(res,j,tau+tautemp) = DA_RES_H.L(res,j,t);
@@ -754,7 +754,7 @@ $                include prepare_da
                          fr_da_cd(pl,tau+tautemp) = DA_CD.L(pl,t);
                          fr_da_cost(tau)          = DA_COST.L*scaler;
                          fr_da_status(pl,tau+tautemp) = DA_ON.L(pl,t);
-                         fr_da_frc(c,r,tau+tautemp) = wind_fc(c,r,t);
+                         fr_da_frc(c,r,tau+tautemp) = ren_fc(c,r,t);
 
 *                        Country level reports
                          fr_da_price_country(c,tau+tautemp) = DA_mkt_country.M(c,t)*scaler;
@@ -766,9 +766,9 @@ $                include prepare_da
 *                         fr_da_price_node(n,tau+tautemp) = DA_mkt_node.M(n,t)*scaler;
 *                         fr_da_netin_node(n,tau+tautemp) = DA_NETINPUT.L(n,t);
 *                         fr_da_lineflow(l,tau+tautemp)   =  sum(n, ptdf(l,n)*DA_NETINPUT.L(n,t));
-                         fr_da_curt_node(r,n,tau+tautemp)  = DA_WIND_CURT.L(r,n,t);
-                         fr_da_ren_node(r,n,tau+tautemp)   = DA_WIND_BID.L(r,n,t);
-                         fr_da_ren_fc_node(r,n,tau+tautemp) = SUM(c$mapnc(n,c), SUM(ren, wind_fc(c,ren,t)*splitren(n,ren)));
+                         fr_da_curt_node(r,n,tau+tautemp)  = DA_REN_CURT.L(r,n,t);
+                         fr_da_ren_node(r,n,tau+tautemp)   = DA_REN_BID.L(r,n,t);
+                         fr_da_ren_fc_node(r,n,tau+tautemp) = SUM(c$mapnc(n,c), SUM(ren, ren_fc(c,ren,t)*splitren(n,ren)));
 *                         fr_da_price_line_pos(l,tau+tautemp) = DA_res_pmax_pos.M(l,t)*scaler;
 *                         fr_da_price_line_neg(l,tau+tautemp) = DA_res_pmax_neg.M(l,t)*scaler;
                  );

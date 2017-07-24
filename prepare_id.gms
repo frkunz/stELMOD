@@ -1,8 +1,44 @@
 $STITLE Prepare Input Data for Intraday Model
+$ontext
++ LICENSE +
+This work is licensed under the MIT License (MIT).
+
+The MIT License (MIT)
+Copyright (c) 2016 Friedrich Kunz (DIW Berlin) and Jan Abrell (ETH Zurich)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
+AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
++ CITATION +
+Whenever you use this code, please refer to
+Abrell, J. and Kunz, F. (2015):
+Integrating Intermittent Renewable Wind Generation - A Stochastic Multi-Market
+Electricity Model for the European Electricity Market
+Networks and Spatial Economics 15(1), pp. 117-147.
+http://link.springer.com/article/10.1007/s11067-014-9272-4
+
+
++ CONTACT +
+Friedrich Kunz, DIW Berlin, fkunz@diw.de, phone: +49(0)30 89789 495
+
+$offtext
 
 *-------------------------------------- Delete and unfix old setting -----------------------
 $include unfix
-wind_fc(c,r,t) = 0;
+ren_fc(c,r,t) = 0;
 dem(t,c) = 0;
 
 on_hist(pl) = 0;
@@ -14,16 +50,16 @@ res_s_up_bar(pl,t) = 0;
 res_s_down_bar(pl,t) = 0;
 res_h_up_bar(j,t) = 0;
 res_h_down_bar(j,t) = 0;
-shed_wind_bar(r,t) = 0;
-wind_curt_bar(r,n,t) = 0;
-wind_tmp(c,r,t) = 0;
+shed_ren_bar(r,t) = 0;
+ren_curt_bar(r,n,t) = 0;
+ren_tmp(c,r,t) = 0;
 exchange(n,t) = 0;
 ntc(c,cc,t) = 0;
 
 $IFTHEN NOT %case%==1
 
-wind_sto_tmp(c,r,t,k) = 0;
-wind_mean_tmp(c,r,t,k) = 0;
+ren_sto_tmp(c,r,t,k) = 0;
+ren_mean_tmp(c,r,t,k) = 0;
 prob(t,k) = 0;
 mapkt(k,t) = NO;
 mmapkt(k,t) = NO;
@@ -74,7 +110,7 @@ loop(ttau$(ord(ttau) ge ord(tau) + lag_id and ord(ttau) le ord(tau) + lag_id + t
 *                Exchange
                  exchange(n,t) = exchangeup(ttau,n);
 *                RES
-                 wind_tmp(c,ren,t) = wind_rel(ttau,c,ren)+0;
+                 ren_tmp(c,ren,t) = ren_rel(ttau,c,ren)+0;
 *                NTC
                  ntc(c,cc,t) = ntcup(ttau,c,cc);
          );
@@ -97,8 +133,8 @@ loop(ttau$(ord(ttau) eq ord(tau) + lag_id),
          loop(mapkt(k,t),
 *                Renewables
                  prob(t,k) = sum((h), ren_frc_prob(ttau,h,k));
-                 wind_sto_tmp(c,ren,t,k) = sum((h), ren_frc(c,ren,ttau,h,k))+0;
-                 wind_sto_tmp(c,ren,t,root)$mapkt(root,t) = wind_rel(ttau,c,ren)+0;
+                 ren_sto_tmp(c,ren,t,k) = sum((h), ren_frc(c,ren,ttau,h,k))+0;
+                 ren_sto_tmp(c,ren,t,root)$mapkt(root,t) = ren_rel(ttau,c,ren)+0;
          );
 );
 
@@ -109,11 +145,11 @@ $ife '%case%=4' $goto det_sto
 
 $label cf_mean
 *changingforecase_mean
-wind_mean_tmp(c,r,t,k)$mapkt(k,t) = sum(kk$mapkt(kk,t), prob(t,kk)*wind_sto_tmp(c,r,t,kk));
+ren_mean_tmp(c,r,t,k)$mapkt(k,t) = sum(kk$mapkt(kk,t), prob(t,kk)*ren_sto_tmp(c,r,t,kk));
 loop(mapkt(k,t),
          prob(t,k) = 1$(prob(t,k) = smax(kk, prob(t,kk)));
 );
-wind_sto_tmp(c,r,t,k)$mapkt(k,t) = wind_mean_tmp(c,r,t,k);
+ren_sto_tmp(c,r,t,k)$mapkt(k,t) = ren_mean_tmp(c,r,t,k);
 $goto det_sto
 
 
@@ -122,7 +158,7 @@ $label cf_mostlikely
 loop(mapkt(k,t),
          prob(t,k) = 1$(prob(t,k) = smax(kk, prob(t,kk)));
 );
-wind_sto_tmp(c,r,t,k)$mapkt(k,t) = wind_sto_tmp(c,r,t,k)$prob(t,k);
+ren_sto_tmp(c,r,t,k)$mapkt(k,t) = ren_sto_tmp(c,r,t,k)$prob(t,k);
 $goto det_sto
 
 
@@ -171,7 +207,7 @@ res_h_up_bar(j,t) = sum(res$mapresDir(res,"up"), ir_res_h(res,j,t));
 res_h_down_bar(j,t) =  sum(res$mapresDir(res,"down"), ir_res_h(res,j,t));
 res_s_up_bar(pl,t) = sum(res$mapresDir(res,"up"), ir_res_s(res,pl,t));
 res_s_down_bar(pl,t) = sum(res$mapresDir(res,"down"), ir_res_s(res,pl,t));
-wind_curt_bar(r,n,t) = ir_curt_da(r,n,t);
+ren_curt_bar(r,n,t) = ir_curt_da(r,n,t);
 
 
 *--------------------------------- Initialize variables -----------------------------
@@ -185,9 +221,9 @@ ID_L.l(j,t) = ir_level_da(j,t);
 ID_GEN_ID.l(pl,t) = 0;
 ID_V_ID.l(j,t) = 0;
 ID_W_ID.l(j,t) = 0;
-ID_WIND_CURT_ID.l(r,n,t) = 0;
+ID_REN_CURT_ID.l(r,n,t) = 0;
 ID_INFES_MKT.l(n,t) = 0;
-ID_WIND_BID.l(r,n,t) = SUM(c$mapnc(n,c), SUM(ren, wind_tmp(c,ren,t)*splitren(n,ren))) - wind_curt_bar(r,n,t);
+ID_REN_BID.l(r,n,t) = SUM(c$mapnc(n,c), SUM(ren, ren_tmp(c,ren,t)*splitren(n,ren))) - ren_curt_bar(r,n,t);
 
 ID_COST.L = 0;
 ID_mkt.M(t) = 0;
@@ -210,9 +246,9 @@ ID_L.l(j,t,k)$mapkt(k,t) = ir_level_da(j,t);
 ID_GEN_ID.l(pl,t,k)$(mapkt(k,t)) = 0;
 ID_V_ID.l(j,t,k)$(mapkt(k,t)) = 0;
 ID_W_ID.l(j,t,k)$(mapkt(k,t)) = 0;
-ID_WIND_CURT_ID.l(r,n,t,k)$(mapkt(k,t)) = 0;
+ID_REN_CURT_ID.l(r,n,t,k)$(mapkt(k,t)) = 0;
 ID_INFES_MKT.l(n,t,k)$(mapkt(k,t)) = 0;
-ID_WIND_BID.l(r,n,t,k)$(mapkt(k,t)) = SUM(c$mapnc(n,c), SUM(ren, wind_sto_tmp(c,ren,t,k)*splitren(n,ren))) - wind_curt_bar(r,n,t);
+ID_REN_BID.l(r,n,t,k)$(mapkt(k,t)) = SUM(c$mapnc(n,c), SUM(ren, ren_sto_tmp(c,ren,t,k)*splitren(n,ren))) - ren_curt_bar(r,n,t);
 
 ID_COST.L = 0;
 ID_mkt.M(k,t)$(mapkt(k,t)) = 0;
